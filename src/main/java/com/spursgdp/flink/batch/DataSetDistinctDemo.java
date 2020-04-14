@@ -39,12 +39,9 @@ public class DataSetDistinctDemo {
         System.out.println("===========================================");
         flatMapData.distinct().print();
 
-
         //Batch处理可以不加这句
 //        env.execute("DataSet Distinct Demo...");
 
     }
-
-
 }
 

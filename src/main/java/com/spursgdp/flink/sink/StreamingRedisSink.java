@@ -27,7 +27,7 @@ public class StreamingRedisSink {
         //sink：需要传入一个RedisMapper实现类
         final String key = "l_word";
 
-        FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost("192.168.8.117").setPort(6379).build();
+        FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost("ubuntu").setPort(6379).build();
         RedisSink redisSink = new RedisSink(redisConf, new RedisMapper<String>() {
 
             @Override
