@@ -1,4 +1,4 @@
-package com.spursgdp.flink.sink;
+package com.spursgdp.flink.streaming.redis;
 
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;

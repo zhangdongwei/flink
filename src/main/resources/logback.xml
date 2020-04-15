@@ -14,7 +14,8 @@
     </appender>
 
     <!-- root logger 配置 -->
-    <root level="INFO">
+    <!--<root level="INFO">-->
+    <root level="WARN">
         <appender-ref ref="console" />
     </root>
 
