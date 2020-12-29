@@ -11,17 +11,18 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.table.api.*;
+import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 
 /**
- * 案例：统计最近 5 秒钟，每个基站的呼叫数量，允许数据的最大乱序时间是2s（需要EventTime + Watermark）
+ * Flink SQL + Sliding Window （需要Event Time + Watermark）
+ * 案例：每3秒钟，统计最近5秒每个基站的通话成功时间总和。
  */
-public class TestWindowByTableAPI {
+public class TestSqlSlidingWindow {
 
     public static void main(String[] args) throws Exception {
-
         //1.创建Blink Stream Env
         EnvironmentSettings bsSettings  = EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build();
         StreamExecutionEnvironment bsEnv = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -43,31 +44,33 @@ public class TestWindowByTableAPI {
                 return stationLog;
             }
         })
-         //引入watermark，可以接收2s的数据乱序
-        .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<StationLog>(Time.seconds(2)) {
-            //指定EventTime对应的字段
-            @Override
-            public long extractTimestamp(StationLog stationLog) {
-                return stationLog.getCallTime();
-            }
-        });
+                //引入watermark，可以接收2s的数据乱序
+                .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<StationLog>(Time.seconds(2)) {
+                    //指定EventTime对应的字段
+                    @Override
+                    public long extractTimestamp(StationLog stationLog) {
+                        return stationLog.getCallTime();
+                    }
+                });
 
-        //5. 将DataStream -> Table，并设置时间属性
-//        Table stationTable = bsTableEnv.fromDataStream(stationStream);
-        Table stationTable = bsTableEnv.fromDataStream(stationStream, "sid,callInt,callOut,callType,duration,callTime.rowtime");
-        stationTable.printSchema();
+        //5. 将DataStream注册到TableEnv中，并设置时间属性
+        bsTableEnv.registerDataStream("station_log",stationStream, "sid,callInt,callOut,callType,duration,callTime.rowtime");
+        Table resultTable = bsTableEnv.sqlQuery(
+                "select sid, " +
+                        "max(s.callType), " +
+                        "count(*)," +
+                        "sum(duration)," +
+                        "hop_start(s.callTime,interval '3' second,interval '5' second) as windowStart, " +
+                        "hop_end(s.callTime,interval '3' second,interval '5' second) as windowEnd " +
+                "from station_log s " +
+                "where s.callType='success' " +
+                "group by hop(s.callTime,interval '3' second,interval '5' second),sid"
+        );
 
-        //6. 滚动窗口（5s）
-        GroupWindowedTable windowTable = stationTable.window(Tumble.over("5.second").on("callTime").as("window"));
-        //   滑动窗口（5s、2s）
-//        GroupWindowedTable windowTable = stationTable.window(Slide.over("5.second").every("2.second").on("callTime").as("window"));
-        Table resultTable = windowTable.groupBy("window,sid")  //必须使用两个字段分组，分别是窗口和基站ID
-                                       .select("sid, window.start, window.end, window.rowtime, sid.count"); //聚合计算
         resultTable.printSchema();
         DataStream<Tuple2<Boolean, Row>> resultDs = bsTableEnv.toRetractStream(resultTable, Row.class);
         resultDs.filter((FilterFunction<Tuple2<Boolean, Row>>) t -> t.f0 == true).print();
 
-        bsEnv.execute("TestWindowByTableAPI");
+        bsEnv.execute("TestSqlSlidingWindow");
     }
-
 }
