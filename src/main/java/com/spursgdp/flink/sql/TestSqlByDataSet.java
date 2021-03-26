@@ -4,7 +4,7 @@ import com.spursgdp.flink.sql.entity.WC;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.java.BatchTableEnvironment;
+import org.apache.flink.table.api.bridge.java.BatchTableEnvironment;
 
 /**
  * 基于DataSet创建Table，并输出

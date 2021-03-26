@@ -63,7 +63,7 @@ public class StateTest2_KeyedState {
             count++;
             //修改ValueState
             keyCountState.update(count);
-            String str = sensorReading.getSensorId() + " : " + count;
+            String str = sensorReading.getId() + " : " + count;
             return str;
         }
 

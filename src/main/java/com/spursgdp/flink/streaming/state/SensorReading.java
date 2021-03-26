@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SensorReading {
 
-    private String sensorId;
+    private String id;
 
     private Long timestamp;
 

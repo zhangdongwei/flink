@@ -22,6 +22,27 @@ public class StateTest3_KeyedStateApplicationCase {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
+//        //2.检查点配置
+//        env.enableCheckpointing(300);
+//
+//        // 高级选项
+//        //一致性级别
+//        env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
+//        //超时写入时间（1分钟）
+//        env.getCheckpointConfig().setCheckpointTimeout(60000L);
+//        //同时进行保存checkpoint的数量
+//        env.getCheckpointConfig().setMaxConcurrentCheckpoints(2);
+//        //两次Checkpoint保存之间的时间间隔不能小于100ms，因为要留出一段时间处理数据，该配置可以覆盖上面的配置
+//        env.getCheckpointConfig().setMinPauseBetweenCheckpoints(100L);
+//        //允许当前Checkpoint保存失败1次（默认是0，如果Checkpoint挂了则任务也就挂了）
+//        env.getCheckpointConfig().setTolerableCheckpointFailureNumber(1);
+//
+//        // 3.重启策略
+//        // 固定延迟重启（每隔10s重启一次，3次重启失败就报错）
+//        env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3,10000L));
+//        // 失败率重启
+//        env.setRestartStrategy(RestartStrategies.failureRateRestart(3, Time.minutes(10), Time.minutes(1)));
+
         // Socket输入流
         DataStream<String> inputStream =  env.socketTextStream("localnode2", 7777);
 
@@ -62,7 +83,7 @@ public class StateTest3_KeyedStateApplicationCase {
             Double lastTemp = lastTempState.value();
             if(lastTemp != null) {
                 if(Math.abs(currentTemp - lastTemp) >= threshold) {
-                    out.collect(new Tuple3<String, Double, Double>(sensorReading.getSensorId(), lastTemp, currentTemp));
+                    out.collect(new Tuple3<String, Double, Double>(sensorReading.getId(), lastTemp, currentTemp));
                 }
             }
             //更新state
