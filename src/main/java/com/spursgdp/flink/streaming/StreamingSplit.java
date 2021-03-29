@@ -42,7 +42,7 @@ public class StreamingSplit {
 //        evenStream.print().setParallelism(1);
         oddStream.print().setParallelism(1);
 
-        env.execute("Streaming Split Demo...");
+        env.execute("Streaming SplitExplode Demo...");
 
     }
 }
